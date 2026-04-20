@@ -14,11 +14,16 @@ Examples:
 """
 
 import argparse
-import json
 import math
 import os
 import re
 import sys
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 
 def parse_params(param_str: str) -> int:
@@ -153,44 +158,40 @@ def generate_config(model_id: str, engine: str, image: str, gpus: int,
     return config
 
 
-def to_yaml(config: list, indent: int = 0) -> str:
-    """Simple YAML serializer (no external dependency)."""
-    lines = []
-
-    for item in config:
-        lines.append(" " * indent + "- id: " + str(item["id"]))
-        lines.append(" " * (indent + 2) + "name: " + str(item["name"]))
-        lines.append(" " * (indent + 2) + "modes:")
-
-        for mode in item["modes"]:
-            lines.append(" " * (indent + 4) + "- name: " + str(mode["name"]))
-            lines.append(" " * (indent + 6) + "description: \"" + str(mode.get("description", "")) + "\"")
-            lines.append(" " * (indent + 6) + "engine: " + str(mode["engine"]))
-            lines.append(" " * (indent + 6) + "image: " + str(mode["image"]))
-            lines.append(" " * (indent + 6) + "resources:")
-
-            for key, val in mode["resources"].items():
-                lines.append(" " * (indent + 8) + key + ": " + str(val))
-
-            if mode.get("args"):
-                lines.append(" " * (indent + 6) + "args:")
-                for arg in mode["args"]:
-                    lines.append(" " * (indent + 8) + "- \"" + str(arg) + "\"")
-
-            if mode.get("distributed"):
-                lines.append(" " * (indent + 6) + "distributed:")
-                lines.append(" " * (indent + 8) + "size: " + str(mode["distributed"]["size"]))
-
-            if mode.get("shmSize"):
-                lines.append(" " * (indent + 6) + "shmSize: " + str(mode["shmSize"]))
-
-            if mode.get("env"):
-                lines.append(" " * (indent + 6) + "env:")
-                for env in mode["env"]:
-                    lines.append(" " * (indent + 8) + "- name: " + str(env["name"]))
-                    lines.append(" " * (indent + 10) + "value: \"" + str(env["value"]) + "\"")
-
-    return "\n".join(lines)
+def to_yaml(config: list) -> str:
+    """Convert config to YAML string."""
+    if HAS_YAML:
+        return yaml.dump(config, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    else:
+        # Fallback: simple YAML serializer (no external dependency)
+        lines = []
+        for item in config:
+            lines.append("- id: " + str(item["id"]))
+            lines.append("  name: " + str(item["name"]))
+            lines.append("  modes:")
+            for mode in item["modes"]:
+                lines.append("    - name: " + str(mode["name"]))
+                lines.append('      description: "' + str(mode.get("description", "")) + '"')
+                lines.append("      engine: " + str(mode["engine"]))
+                lines.append("      image: " + str(mode["image"]))
+                lines.append("      resources:")
+                for key, val in mode["resources"].items():
+                    lines.append("        " + key + ": " + str(val))
+                if mode.get("args"):
+                    lines.append("      args:")
+                    for arg in mode["args"]:
+                        lines.append('        - "' + str(arg) + '"')
+                if mode.get("distributed"):
+                    lines.append("      distributed:")
+                    lines.append("        size: " + str(mode["distributed"]["size"]))
+                if mode.get("shmSize"):
+                    lines.append("      shmSize: " + str(mode["shmSize"]))
+                if mode.get("env"):
+                    lines.append("      env:")
+                    for env in mode["env"]:
+                        lines.append("        - name: " + str(env["name"]))
+                        lines.append('          value: "' + str(env["value"]) + '"')
+        return "\n".join(lines)
 
 
 def main():
