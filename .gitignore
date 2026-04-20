@@ -1,0 +1,33 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/*
+Dockerfile.cross
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# editor and IDE paraphernalia
+.idea
+.vscode
+.qoder
+.claude
+*.swp
+*.swo
+*~
+.devcontainer
+**/*.tgz
+**/.DS_Store
+.claude/
+
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
